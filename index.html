@@ -3,166 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>교무실 호출 시스템 - 학생용</title>
+    <title>교무실 호출 - 학생용</title>
     <style>
-        @font-face {
-            font-family: 'Paperlogy';
-            src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-Regular.woff2') format('woff2');
-        }
+        @font-face { font-family: 'Paperlogy'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-Regular.woff2') format('woff2'); }
         * { font-family: 'Paperlogy', sans-serif; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
-        
-        body { 
-            margin: 0; padding: 20px; background-color: #f1f5f9; 
-            display: flex; justify-content: center; align-items: center; min-height: 100vh; 
-        }
-
-        .container { 
-            background: white; padding: 30px; border-radius: 30px; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.1); width: 100%; 
-            max-width: 600px; min-height: 700px; display: flex; flex-direction: column; position: relative; 
-        }
-        
+        body { margin: 0; padding: 20px; background-color: #f1f5f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { background: white; padding: 30px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); width: 100%; max-width: 600px; min-height: 700px; display: flex; flex-direction: column; position: relative; }
         .page { display: none; flex-direction: column; height: 100%; flex: 1; }
         .page.active { display: flex; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
         h1 { font-size: 1.8rem; color: #1e293b; margin-bottom: 10px; }
         .subtitle { color: #64748b; margin-bottom: 25px; line-height: 1.5; }
-
-        /* 그리드 스타일 */
         .grid { display: grid; gap: 8px; margin-bottom: 20px; }
-        .btn-opt { 
-            background: #f8fafc; border: 2px solid #e2e8f0; padding: 15px 5px; 
-            border-radius: 12px; cursor: pointer; text-align: center; 
-            font-weight: 600; color: #475569; transition: 0.2s; 
-        }
-        .btn-opt.selected { background: #eff6ff; border-color: #2563eb; color: #2563eb; box-shadow: 0 4px 10px rgba(37,99,235,0.1); }
-
-        input { 
-            width: 100%; padding: 16px; border: 2px solid #e2e8f0; 
-            border-radius: 15px; font-size: 1.1rem; margin-bottom: 15px; outline: none; 
-        }
-        input:focus { border-color: #2563eb; }
-
-        /* 롱 프레스 버튼 (3초 홀딩) */
-        .long-press-container { margin-top: auto; padding: 10px 0; }
-        .long-press-area { 
-            position: relative; width: 100%; height: 80px; 
-            border-radius: 20px; background: #e2e8f0; overflow: hidden; 
-            cursor: pointer; transition: transform 0.1s;
-        }
-        .long-press-area:active { transform: scale(0.98); }
-        .progress-bar { 
-            position: absolute; left: 0; top: 0; height: 100%; width: 0%; 
-            background: #1d4ed8; /* 채도 낮은 딥 블루 */
-            transition: width 0.1s linear; 
-        }
-        .press-btn-text { 
-            position: absolute; width: 100%; height: 100%; 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 1.3rem; font-weight: bold; color: #64748b; z-index: 2; 
-            pointer-events: none; 
-        }
+        .btn-opt { background: #f8fafc; border: 2px solid #e2e8f0; padding: 15px 5px; border-radius: 12px; cursor: pointer; text-align: center; font-weight: 600; color: #475569; transition: 0.2s; }
+        .btn-opt.selected { background: #eff6ff; border-color: #2563eb; color: #2563eb; }
+        input { width: 100%; padding: 16px; border: 2px solid #e2e8f0; border-radius: 15px; font-size: 1.1rem; margin-bottom: 15px; outline: none; }
+        .long-press-area { position: relative; width: 100%; height: 80px; border-radius: 20px; background: #e2e8f0; overflow: hidden; cursor: pointer; margin-top: auto; }
+        .progress-bar { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: #1d4ed8; transition: width 0.1s linear; }
+        .press-btn-text { position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: bold; color: #64748b; z-index: 2; pointer-events: none; }
         .long-press-area.active-press .press-btn-text { color: white; }
         .long-press-area.disabled { background: #f1f5f9; cursor: not-allowed; opacity: 0.5; }
-
-        /* 토스 스타일 파란색 체크 애니메이션 */
         .toss-check-container { width: 120px; height: 120px; margin: 40px auto 30px; position: relative; }
-        .circular-loader {
-            width: 120px; height: 120px; stroke: #2563eb; stroke-width: 6;
-            fill: none; stroke-dasharray: 283; stroke-dashoffset: 283;
-            animation: loader-spin 1.0s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-            transform-origin: 50% 50%; transform: rotate(-90deg);
-        }
-        .check-path {
-            stroke: #2563eb; stroke-width: 8; stroke-linecap: round; fill: none;
-            stroke-dasharray: 70; stroke-dashoffset: 70;
-            animation: checkmark-draw 0.5s 0.7s cubic-bezier(0.65, 0, 0.45, 1) forwards;
-        }
+        .circular-loader { width: 120px; height: 120px; stroke: #2563eb; stroke-width: 6; fill: none; stroke-dasharray: 283; stroke-dashoffset: 283; animation: loader-spin 1.0s cubic-bezier(0.4, 0, 0.2, 1) forwards; transform-origin: 50% 50%; transform: rotate(-90deg); }
+        .check-path { stroke: #2563eb; stroke-width: 8; stroke-linecap: round; fill: none; stroke-dasharray: 70; stroke-dashoffset: 70; animation: checkmark-draw 0.5s 0.7s cubic-bezier(0.65, 0, 0.45, 1) forwards; }
         @keyframes loader-spin { 100% { stroke-dashoffset: 0; transform: rotate(270deg); } }
         @keyframes checkmark-draw { 100% { stroke-dashoffset: 0; } }
-
-        /* 심리적 홀딩 레이어 */
-        #holdingOverlay { 
-            position: fixed; top:0; left:0; width:100%; height:100%; 
-            background: rgba(255,255,255,0.9); z-index: 1000; 
-            display: none; flex-direction: column; justify-content: center; align-items: center; 
-        }
+        #holdingOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.9); z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; }
     </style>
 </head>
 <body>
-
 <div class="container">
     <div id="page1" class="page active">
-        <h1>선생님 호출</h1>
-        <p class="subtitle">교무실에 계신 선생님을 선택해 주세요.</p>
-        <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
-            <div class="btn-opt" onclick="sel('t','김국어')">김국어</div>
-            <div class="btn-opt" onclick="sel('t','이수학')">이수학</div>
-            <div class="btn-opt" onclick="sel('t','박영어')">박영어</div>
-            <div class="btn-opt" onclick="sel('t','최과학')">최과학</div>
-            <div class="btn-opt" onclick="sel('t','정정보')">정정보</div>
-        </div>
+        <h1>선생님 선택</h1>
+        <div class="grid" id="teacherGrid" style="grid-template-columns: repeat(3, 1fr);"></div>
         <button class="btn-opt" id="n1" disabled onclick="go(2)" style="margin-top:auto; background:#2563eb; color:white; border:none; padding:22px; border-radius:20px; font-size:1.2rem;">다음 단계</button>
     </div>
-
     <div id="page2" class="page">
         <h1>본인 확인</h1>
-        <p class="subtitle" id="selectedTeacherInfo" style="color:#2563eb; font-weight:bold;"></p>
-        
         <div class="grid" id="classGrid" style="grid-template-columns: repeat(5, 1fr);"></div>
-        <div class="grid" id="numGrid" style="grid-template-columns: repeat(6, 1fr); max-height: 160px; overflow-y: auto; padding: 5px; border: 1px solid #f1f5f9; border-radius: 12px;"></div>
-        
-        <input type="text" id="nameInp" placeholder="이름을 입력하세요" oninput="val2()">
-        
-        <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
-            <div class="btn-opt" onclick="sel('p','질문')">질문</div>
-            <div class="btn-opt" onclick="sel('p','제출')">제출</div>
-            <div class="btn-opt" onclick="sel('p','상담')">상담</div>
-        </div>
-        
-        <div class="long-press-container">
-            <div class="long-press-area disabled" id="longPressBtn">
-                <div class="progress-bar" id="progressBar"></div>
-                <div class="press-btn-text" id="btnText">3초간 꾹 눌러서 전송</div>
-            </div>
+        <div class="grid" id="numGrid" style="grid-template-columns: repeat(6, 1fr); max-height: 160px; overflow-y: auto; padding: 5px;"></div>
+        <input type="text" id="nameInp" placeholder="이름 입력" oninput="val2()">
+        <div class="grid" id="purposeGrid" style="grid-template-columns: repeat(3, 1fr);"></div>
+        <div class="long-press-area disabled" id="longPressBtn">
+            <div class="progress-bar" id="progressBar"></div>
+            <div class="press-btn-text" id="btnText">3초간 꾹 눌러서 전송</div>
         </div>
     </div>
-
     <div id="page3" class="page" style="text-align:center; justify-content:center;">
-        <div class="toss-check-container">
-            <svg viewBox="0 0 100 100">
-                <circle class="circular-loader" cx="50" cy="50" r="45"/>
-                <path class="check-path" d="M30 50 L45 65 L70 35"/>
-            </svg>
-        </div>
-        <h1 style="margin-top: 20px;">호출을 보냈어요</h1>
-        <p class="subtitle">선생님이 확인하실 때까지<br>잠시만 밖에서 기다려 주세요.</p>
-        <button onclick="location.reload()" style="background:#f1f5f9; border:none; padding:18px 40px; border-radius:18px; color:#4a5568; font-weight:bold; cursor:pointer; margin-top:20px;">처음으로</button>
+        <div class="toss-check-container"><svg viewBox="0 0 100 100"><circle class="circular-loader" cx="50" cy="50" r="45"/><path class="check-path" d="M30 50 L45 65 L70 35"/></svg></div>
+        <h1>호출을 보냈어요</h1>
+        <button onclick="location.reload()" style="background:#f1f5f9; border:none; padding:18px 40px; border-radius:18px; color:#4a5568; font-weight:bold; cursor:pointer;">처음으로</button>
     </div>
 </div>
-
-<div id="holdingOverlay">
-    <h1 style="color:#2563eb;">전송을 완료하는 중...</h1>
-</div>
+<div id="holdingOverlay"><h1 style="color:#2563eb;">전송 중...</h1></div>
 
 <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbz9pc1iLJRsQLv9AU4PK9ozseuwQLPFwV0fILVJyicXaLzqQbV-UuqPRAX_fpcSBgl4/exec"; 
     let data = { t:'', b:'', n:'', name:'', p:'' };
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyAX-64IIAjJmLS-GOf-dQ2X_qdsLasSqI1lnFeHJFaGZsohBN4a-U2RToE_nZ8mKdU/exec"; 
 
-    function go(p) {
-        document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
-        document.getElementById('page'+p).classList.add('active');
-        if(p===2) document.getElementById('selectedTeacherInfo').innerText = `${data.t} 선생님을 호출합니다.`;
-    }
+    function go(p) { document.querySelectorAll('.page').forEach(el => el.classList.remove('active')); document.getElementById('page'+p).classList.add('active'); }
+    
+    const teachers = ['김국어', '이수학', '박영어', '최과학', '정정보'];
+    teachers.forEach(t => document.getElementById('teacherGrid').innerHTML += `<div class="btn-opt" onclick="sel('t','${t}')">${t}</div>`);
+    for(let i=1; i<=10; i++) document.getElementById('classGrid').innerHTML += `<div class="btn-opt" onclick="sel('b','${i}')">${i}반</div>`;
+    for(let i=1; i<=35; i++) document.getElementById('numGrid').innerHTML += `<div class="btn-opt" onclick="sel('n','${i}')">${i}번</div>`;
+    ['질문', '제출', '상담'].forEach(p => document.getElementById('purposeGrid').innerHTML += `<div class="btn-opt" onclick="sel('p','${p}')">${p}</div>`);
 
-    // 그리드 동적 생성
-    const cg = document.getElementById('classGrid');
-    for(let i=1; i<=10; i++) cg.innerHTML += `<div class="btn-opt" onclick="sel('b','${i}')">${i}반</div>`;
-    const ng = document.getElementById('numGrid');
-    for(let i=1; i<=35; i++) ng.innerHTML += `<div class="btn-opt" onclick="sel('n','${i}')">${i}번</div>`;
-
-    function sel(k, v) {
+    function sel(k, v) { 
         event.target.parentElement.querySelectorAll('.btn-opt').forEach(b => b.classList.remove('selected'));
         event.target.classList.add('selected');
         data[k] = v;
@@ -174,75 +81,35 @@
         data.name = document.getElementById('nameInp').value;
         const ok = data.b && data.n && data.name && data.p;
         const btn = document.getElementById('longPressBtn');
-        if(ok) {
-            btn.classList.remove('disabled');
-            document.getElementById('btnText').innerText = "3초간 꾹 눌러서 전송";
-        } else {
-            btn.classList.add('disabled');
-        }
+        if(ok) btn.classList.remove('disabled'); else btn.classList.add('disabled');
     }
 
-    // 롱 프레스(3초 홀딩) 로직
-    let pressTimer;
-    let progress = 0;
-    const holdBtn = document.getElementById('longPressBtn');
-    const bar = document.getElementById('progressBar');
-    const bTxt = document.getElementById('btnText');
+    let pressTimer, progress = 0;
+    const holdBtn = document.getElementById('longPressBtn'), bar = document.getElementById('progressBar');
 
-    function startPress(e) {
+    function startPress() {
         if(holdBtn.classList.contains('disabled')) return;
+        const sid = `2${data.b.padStart(2,'0')}${data.n.padStart(2,'0')}`;
+        if (localStorage.getItem('lc_'+sid) && new Date().getTime() - localStorage.getItem('lc_'+sid) < 600000) return alert("10분 뒤 재호출 가능");
         
-        // 10분 재호출 방지 체크
-        const studentId = `2${data.b.padStart(2,'0')}${data.n.padStart(2,'0')}`;
-        const lastCall = localStorage.getItem('lastCallTime_' + studentId);
-        if (lastCall && new Date().getTime() - lastCall < 600000) {
-            alert("이미 호출했습니다. 10분 후에 다시 시도하세요.");
-            return;
-        }
-
         holdBtn.classList.add('active-press');
         pressTimer = setInterval(() => {
-            progress += 2; // 약 3~4초 사이 (50번 실행)
-            bar.style.width = progress + "%";
-            
-            if(progress >= 100) {
-                clearInterval(pressTimer);
-                executeSubmit(studentId);
-            }
+            progress += 2; bar.style.width = progress + "%";
+            if(progress >= 100) { clearInterval(pressTimer); executeSubmit(sid); }
         }, 60);
     }
 
-    function endPress() {
-        clearInterval(pressTimer);
-        holdBtn.classList.remove('active-press');
-        if(progress < 100) {
-            progress = 0;
-            bar.style.width = "0%";
-            bTxt.innerText = "3초간 꾹 눌러서 전송";
-        }
-    }
+    function endPress() { clearInterval(pressTimer); holdBtn.classList.remove('active-press'); if(progress < 100) { progress = 0; bar.style.width = "0%"; } }
 
     holdBtn.addEventListener('mousedown', startPress);
     holdBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startPress(); });
-    window.addEventListener('mouseup', endPress);
-    window.addEventListener('touchend', endPress);
+    window.addEventListener('mouseup', endPress); window.addEventListener('touchend', endPress);
 
     function executeSubmit(id) {
-        // 실제 전송은 누르자마자 시작 (심리적 낚시)
-        fetch(GAS_URL, {
-            method: "POST",
-            mode: 'no-cors',
-            body: JSON.stringify({ teacher: data.t, id: id, name: data.name, purpose: data.p })
-        });
-
-        localStorage.setItem('lastCallTime_' + id, new Date().getTime());
-        
-        // 1.5초 홀딩 오버레이 (발 묶기용)
+        fetch(GAS_URL, { method: "POST", mode: 'no-cors', body: JSON.stringify({ teacher: data.t, id: id, name: data.name, purpose: data.p }) });
+        localStorage.setItem('lc_'+id, new Date().getTime());
         document.getElementById('holdingOverlay').style.display = 'flex';
-        setTimeout(() => {
-            document.getElementById('holdingOverlay').style.display = 'none';
-            go(3);
-        }, 1500);
+        setTimeout(() => { document.getElementById('holdingOverlay').style.display = 'none'; go(3); }, 1500);
     }
 </script>
 </body>
