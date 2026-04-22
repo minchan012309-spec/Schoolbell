@@ -9,9 +9,9 @@
             font-family: 'Paperlogy';
             src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-Regular.woff2') format('woff2');
         }
-        * { font-family: 'Paperlogy', sans-serif; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { font-family: 'Paperlogy', sans-serif; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
         body { margin: 0; padding: 20px; background-color: #f1f5f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { background: white; padding: 30px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); width: 100%; max-width: 600px; min-height: 600px; display: flex; flex-direction: column; }
+        .container { background: white; padding: 30px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); width: 100%; max-width: 600px; min-height: 650px; display: flex; flex-direction: column; position: relative; }
         
         .page { display: none; flex-direction: column; height: 100%; flex: 1; }
         .page.active { display: flex; animation: fadeIn 0.3s ease; }
@@ -20,23 +20,27 @@
         h1 { font-size: 1.8rem; color: #1e293b; margin-bottom: 10px; }
         .subtitle { color: #64748b; margin-bottom: 25px; }
 
-        /* 선택 그리드 개선 */
+        /* 그리드 개선 */
         .grid { display: grid; gap: 8px; margin-bottom: 20px; }
         .btn-opt { background: #f8fafc; border: 2px solid #e2e8f0; padding: 15px 5px; border-radius: 12px; cursor: pointer; text-align: center; font-weight: 600; color: #475569; transition: 0.2s; }
-        .btn-opt.selected { background: #eff6ff; border-color: #2563eb; color: #2563eb; transform: scale(0.98); }
+        .btn-opt.selected { background: #eff6ff; border-color: #2563eb; color: #2563eb; }
 
-        /* 입력창 */
         input { width: 100%; padding: 16px; border: 2px solid #e2e8f0; border-radius: 15px; font-size: 1.1rem; margin-bottom: 15px; outline: none; }
-        input:focus { border-color: #2563eb; }
 
-        /* 하단 버튼 */
-        .btn-next { background: #2563eb; color: white; border: none; padding: 20px; border-radius: 20px; font-size: 1.3rem; font-weight: bold; cursor: pointer; margin-top: auto; }
-        .btn-next:disabled { background: #cbd5e0; cursor: not-allowed; }
+        /* 롱 프레스 버튼 스타일 */
+        .long-press-area { margin-top: auto; position: relative; width: 100%; height: 75px; border-radius: 20px; background: #e2e8f0; overflow: hidden; cursor: pointer; }
+        .progress-bar { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: #1d4ed8; transition: width 0.1s linear; }
+        .press-btn-text { position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: bold; color: white; z-index: 2; pointer-events: none; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .long-press-area.disabled { background: #cbd5e0; cursor: not-allowed; }
+        .long-press-area.disabled .press-btn-text { color: #94a3b8; }
 
-        /* 홀딩 오버레이 */
+        /* 토스 스타일 체크 애니메이션 */
+        .success-checkmark { width: 80px; height: 80px; margin: 0 auto 30px; }
+        .check-icon { width: 80px; height: 80px; position: relative; border-radius: 50%; box-sizing: content-box; border: 4px solid #4CAF50; }
+        .check-icon::after { content: ''; position: absolute; left: 14px; top: 38px; width: 20px; height: 40px; border-right: 4px solid #4CAF50; border-bottom: 4px solid #4CAF50; transform: rotate(45deg); transform-origin: 100% 100%; animation: checkmark 0.6s ease; }
+        @keyframes checkmark { 0% { height: 0; width: 0; opacity: 0; } 40% { height: 0; width: 20px; opacity: 1; } 100% { height: 40px; width: 20px; opacity: 1; } }
+
         #holdingOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        .spinner { width: 60px; height: 60px; border: 6px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -52,7 +56,7 @@
             <div class="btn-opt" onclick="sel('t','최과학')">최과학</div>
             <div class="btn-opt" onclick="sel('t','정정보')">정정보</div>
         </div>
-        <button class="btn-next" id="n1" disabled onclick="go(2)">다음 단계</button>
+        <button class="btn-opt" id="n1" disabled onclick="go(2)" style="margin-top:auto; background:#2563eb; color:white; border:none; padding:20px; border-radius:20px;">다음 단계</button>
     </div>
 
     <div id="page2" class="page">
@@ -65,33 +69,36 @@
             <div class="btn-opt" onclick="sel('p','제출')">제출</div>
             <div class="btn-opt" onclick="sel('p','상담')">상담</div>
         </div>
-        <button class="btn-next" id="n2" disabled onclick="submit()">호출 전송</button>
+        
+        <div class="long-press-area disabled" id="longPressBtn">
+            <div class="progress-bar" id="progressBar"></div>
+            <div class="press-btn-text" id="btnText">꾹 눌러서 전송</div>
+        </div>
     </div>
 
     <div id="page3" class="page" style="text-align:center; justify-content:center;">
-        <h1 style="font-size: 3rem;">✅</h1>
-        <h1>전송 완료</h1>
-        <p class="subtitle">선생님이 확인하실 때까지<br>밖에서 대기해주세요.</p>
-        <button class="btn-next" onclick="location.reload()" style="background:#64748b;">처음으로</button>
+        <div class="success-checkmark">
+            <div class="check-icon"></div>
+        </div>
+        <h1 style="margin-top: 20px;">호출을 보냈어요</h1>
+        <p class="subtitle">선생님이 확인하실 때까지<br>잠시만 밖에서 기다려 주세요.</p>
+        <button onclick="location.reload()" style="background:#f1f5f9; border:none; padding:15px 30px; border-radius:15px; color:#64748b; font-weight:bold; cursor:pointer;">처음으로</button>
     </div>
 </div>
 
 <div id="holdingOverlay">
-    <div class="spinner"></div>
-    <h1 id="holdMsg">호출을 전송 중입니다...</h1>
-    <p class="subtitle">잠시만 패드 앞에서 기다려주세요 (3s)</p>
+    <h1 id="holdMsg">선생님께 신호를 보내는 중...</h1>
 </div>
 
 <script>
     let data = { t:'', b:'', n:'', name:'', p:'' };
-    const GAS_URL = "YOUR_GAS_URL_HERE"; 
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyAX-64IIAjJmLS-GOf-dQ2X_qdsLasSqI1lnFeHJFaGZsohBN4a-U2RToE_nZ8mKdU/exec"; 
 
     function go(p) {
         document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
         document.getElementById('page'+p).classList.add('active');
     }
 
-    // 그리드 생성
     const cg = document.getElementById('classGrid');
     for(let i=1; i<=10; i++) cg.innerHTML += `<div class="btn-opt" onclick="sel('b','${i}')">${i}반</div>`;
     const ng = document.getElementById('numGrid');
@@ -108,45 +115,71 @@
     function val2() {
         data.name = document.getElementById('nameInp').value;
         const ok = data.b && data.n && data.name && data.p;
-        document.getElementById('n2').disabled = !ok;
+        const btn = document.getElementById('longPressBtn');
+        if(ok) btn.classList.remove('disabled');
+        else btn.classList.add('disabled');
     }
 
-    function submit() {
-        const studentId = `2${data.b.padStart(2,'0')}${data.n.padStart(2,'0')}`;
+    // 롱 프레스 로직
+    let pressTimer;
+    let progress = 0;
+    const holdBtn = document.getElementById('longPressBtn');
+    const bar = document.getElementById('progressBar');
+    const bTxt = document.getElementById('btnText');
+
+    function startPress(e) {
+        if(holdBtn.classList.contains('disabled')) return;
         
-        // 1. 재호출 방지 체크 (로컬 스토리지 활용)
+        // 10분 체크
+        const studentId = `2${data.b.padStart(2,'0')}${data.n.padStart(2,'0')}`;
         const lastCall = localStorage.getItem('lastCallTime_' + studentId);
-        const now = new Date().getTime();
-        if (lastCall && now - lastCall < 600000) { // 10분 = 600,000ms
-            const left = Math.ceil((600000 - (now - lastCall)) / 60000);
-            alert(`재호출 불가: 동일 학번으로는 ${left}분 후에 다시 호출할 수 있습니다.`);
+        if (lastCall && new Date().getTime() - lastCall < 600000) {
+            alert("10분 이내에 재호출이 불가능합니다.");
             return;
         }
 
-        // 2. 실제 전송 (누르자마자 즉시 서버로 쏨)
+        pressTimer = setInterval(() => {
+            progress += 3.33; // 약 3초 (30번 호출)
+            bar.style.width = progress + "%";
+            bTxt.innerText = "꾹 누르세요!";
+            
+            if(progress >= 100) {
+                clearInterval(pressTimer);
+                executeSubmit(studentId);
+            }
+        }, 100);
+    }
+
+    function endPress() {
+        clearInterval(pressTimer);
+        if(progress < 100) {
+            progress = 0;
+            bar.style.width = "0%";
+            bTxt.innerText = "꾹 눌러서 전송";
+        }
+    }
+
+    holdBtn.addEventListener('mousedown', startPress);
+    holdBtn.addEventListener('touchstart', startPress);
+    window.addEventListener('mouseup', endPress);
+    window.addEventListener('touchend', endPress);
+
+    function executeSubmit(id) {
+        // 실제 전송
         fetch(GAS_URL, {
             method: "POST",
             mode: 'no-cors',
-            body: JSON.stringify({ teacher: data.t, id: studentId, name: data.name, purpose: data.p })
+            body: JSON.stringify({ teacher: data.t, id: id, name: data.name, purpose: data.p })
         });
 
-        // 3. 심리적 홀딩 (사실은 이미 전송됨)
-        localStorage.setItem('lastCallTime_' + studentId, now);
-        const overlay = document.getElementById('holdingOverlay');
-        const holdMsg = document.getElementById('holdMsg');
-        overlay.style.display = 'flex';
+        localStorage.setItem('lastCallTime_' + id, new Date().getTime());
         
-        let count = 3;
-        const timer = setInterval(() => {
-            count--;
-            if(count > 0) {
-                holdMsg.innerText = `호출을 전송 중입니다... (${count}s)`;
-            } else {
-                clearInterval(timer);
-                overlay.style.display = 'none';
-                go(3);
-            }
-        }, 1000);
+        // 심리적 홀딩 레이어 (선택 사항, 바로 결과 페이지 가도 됨)
+        document.getElementById('holdingOverlay').style.display = 'flex';
+        setTimeout(() => {
+            document.getElementById('holdingOverlay').style.display = 'none';
+            go(3);
+        }, 1500);
     }
 </script>
 </body>
