@@ -1,46 +1,99 @@
-// dashboard.html의 스크립트 부분 수정
-let selectedVoice = null;
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>호출 대시보드 - 선생님용</title>
+    <style>
+        @font-face { font-family: 'Paperlogy'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-Regular.woff2') format('woff2'); }
+        * { font-family: 'Paperlogy', sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #f8fafc; padding: 40px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        #startLayer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .start-btn { background: #2563eb; color: white; padding: 25px 60px; border-radius: 20px; font-size: 2rem; border: none; cursor: pointer; font-weight: bold; }
+        .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
+        .alert-card { background: white; border-radius: 40px; padding: 60px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.1); display: none; flex: 1; margin-bottom: 20px; animation: slideUp 0.5s ease; }
+        .alert-card.active { display: block; }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .t-name { font-size: 5rem; font-weight: 900; color: #0f172a; margin: 20px 0; }
+        .info-box { background: #f1f5f9; padding: 40px; border-radius: 30px; font-size: 3rem; }
+        .history-item { background: white; padding: 15px; border-radius: 15px; margin-top: 10px; display: flex; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+<div id="startLayer">
+    <button class="start-btn" onclick="initSystem()">수신 시작하기</button>
+</div>
+<div class="header">
+    <div style="color:#2563eb; font-weight:bold; font-size:1.5rem;">● 실시간 모니터링 중</div>
+    <div id="clock" style="font-size:1.5rem;">00:00:00</div>
+</div>
+<div id="empty" style="flex:1; display:flex; justify-content:center; align-items:center; font-size:2rem; color:#cbd5e0;">대기 중...</div>
+<div class="alert-card" id="card">
+    <div style="color:#2563eb; font-size:1.5rem; font-weight:bold;">지금 호출한 선생님</div>
+    <div class="t-name" id="tName">---</div>
+    <div class="info-box"><span id="sInfo">학번 성함</span><br><span id="sPurp" style="color:#2563eb;">목적</span></div>
+</div>
+<div id="historyList" style="margin-top:20px;"></div>
 
-function loadVoice() {
-    // 목소리 목록을 가져와서 한국어 설정
-    const voices = window.speechSynthesis.getVoices();
-    selectedVoice = voices.find(v => v.lang.includes('ko') && v.name.includes('Google')) || 
-                    voices.find(v => v.lang.includes('ko'));
-}
+<script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbz9pc1iLJRsQLv9AU4PK9ozseuwQLPFwV0fILVJyicXaLzqQbV-UuqPRAX_fpcSBgl4/exec";
+    let lastTime = Date.now(), selectedVoice = null, history = [];
 
-// 브라우저마다 음성 로드 타이밍이 달라서 두 번 체크
-window.speechSynthesis.onvoiceschanged = loadVoice;
+    function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }
+    setInterval(updateClock, 1000);
 
-function initSystem() {
-    document.getElementById('startLayer').style.display = 'none';
-    
-    // [TTS 해결책] 버튼 누르는 순간 빈 소리를 내서 브라우저 잠금을 해제함
-    const silentUtterance = new SpeechSynthesisUtterance("");
-    window.speechSynthesis.speak(silentUtterance);
-    
-    loadVoice(); // 음성 다시 확인
-    
-    new Audio('https://t1.daumcdn.net/kakaopay/tesla/20230728/sfx/ding.mp3').play();
-    setInterval(checkCall, 1000); 
-}
+    function loadVoice() { 
+        const voices = window.speechSynthesis.getVoices();
+        selectedVoice = voices.find(v => v.lang.includes('ko') && v.name.includes('Google')) || voices.find(v => v.lang.includes('ko'));
+    }
+    window.speechSynthesis.onvoiceschanged = loadVoice;
 
-function notify(d) {
-    // ... (화면 표시 로직 동일) ...
+    function initSystem() {
+        document.getElementById('startLayer').style.display = 'none';
+        
+        // 브라우저 TTS 잠금 해제용 빈 대사
+        window.speechSynthesis.speak(new SpeechSynthesisUtterance(""));
+        loadVoice();
+        
+        new Audio('https://t1.daumcdn.net/kakaopay/tesla/20230728/sfx/ding.mp3').play();
+        setInterval(checkCall, 1000); 
+    }
 
-    // 알림음 재생
-    const audio = new Audio('https://t1.daumcdn.net/kakaopay/tesla/20230728/sfx/ding.mp3');
-    audio.play().then(() => {
-        // 소리가 정상 재생된 후 0.8초 뒤 TTS 실행
-        setTimeout(() => {
-            const text = `${d.teacher} 선생님, ${d.name} 학생이 ${d.purpose}로 호출했습니다.`;
-            const uttr = new SpeechSynthesisUtterance(text);
-            
-            if (selectedVoice) uttr.voice = selectedVoice;
-            uttr.lang = 'ko-KR';
-            uttr.rate = 1.0; // 속도
-            uttr.pitch = 1.0; // 음높이
-            
-            window.speechSynthesis.speak(uttr);
-        }, 800);
-    }).catch(e => console.log("오디오 재생 실패 (권한 필요):", e));
-}
+    async function checkCall() {
+        try {
+            const res = await fetch(GAS_URL + "?type=latest&v=" + Date.now());
+            const d = await res.json();
+            if(d.timestamp && Number(d.timestamp) > lastTime) {
+                lastTime = Number(d.timestamp);
+                notify(d);
+            }
+        } catch(e) {}
+    }
+
+    function notify(d) {
+        document.getElementById('empty').style.display = 'none';
+        const card = document.getElementById('card');
+        document.getElementById('tName').innerText = d.teacher + " 선생님";
+        document.getElementById('sInfo').innerText = d.id + " " + d.name;
+        document.getElementById('sPurp').innerText = d.purpose;
+        card.classList.add('active');
+
+        const audio = new Audio('https://t1.daumcdn.net/kakaopay/tesla/20230728/sfx/ding.mp3');
+        audio.play().then(() => {
+            setTimeout(() => {
+                const text = `${d.teacher} 선생님, ${d.name} 학생이 ${d.purpose}로 왔습니다.`;
+                const uttr = new SpeechSynthesisUtterance(text);
+                if (selectedVoice) uttr.voice = selectedVoice;
+                uttr.lang = 'ko-KR';
+                window.speechSynthesis.speak(uttr);
+            }, 800);
+        });
+
+        history.unshift(d); if(history.length > 3) history.pop();
+        document.getElementById('historyList').innerHTML = history.map(h => `<div class="history-item"><span>${h.id} ${h.name}</span><span>${h.purpose}</span></div>`).join('');
+
+        setTimeout(() => { card.classList.remove('active'); document.getElementById('empty').style.display = 'flex'; }, 10000);
+    }
+</script>
+</body>
+</html>
