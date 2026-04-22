@@ -19,7 +19,7 @@
         .btn-opt.selected { background: #eff6ff; border-color: #2563eb; color: #2563eb; }
         input { width: 100%; padding: 16px; border: 2px solid #e2e8f0; border-radius: 15px; font-size: 1.1rem; margin-bottom: 15px; outline: none; }
         .long-press-area { position: relative; width: 100%; height: 80px; border-radius: 20px; background: #e2e8f0; overflow: hidden; cursor: pointer; margin-top: auto; }
-        .progress-bar { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: #2563eb; transition: width 0.1s linear; }
+        .progress-bar { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: #1d4ed8; transition: width 0.1s linear; }
         .press-btn-text { position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: bold; color: #64748b; z-index: 2; pointer-events: none; }
         .long-press-area.active-press .press-btn-text { color: white; }
         .long-press-area.disabled { background: #f1f5f9; cursor: not-allowed; opacity: 0.5; }
@@ -60,7 +60,6 @@
 <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz9pc1iLJRsQLv9AU4PK9ozseuwQLPFwV0fILVJyicXaLzqQbV-UuqPRAX_fpcSBgl4/exec"; 
     let data = { t:'', b:'', n:'', name:'', p:'' };
-    let isSent = false;
 
     function go(p) { document.querySelectorAll('.page').forEach(el => el.classList.remove('active')); document.getElementById('page'+p).classList.add('active'); }
     
@@ -93,24 +92,14 @@
         const sid = `2${data.b.padStart(2,'0')}${data.n.padStart(2,'0')}`;
         if (localStorage.getItem('lc_'+sid) && new Date().getTime() - localStorage.getItem('lc_'+sid) < 600000) return alert("10분 뒤 재호출 가능");
         
-        // 누르자마자 서버로 신호 발사
-        if(!isSent) {
-            executeSubmit(sid);
-            isSent = true;
-        }
-
         holdBtn.classList.add('active-press');
         pressTimer = setInterval(() => {
             progress += 2; bar.style.width = progress + "%";
-            if(progress >= 100) { clearInterval(pressTimer); go(3); }
+            if(progress >= 100) { clearInterval(pressTimer); executeSubmit(sid); }
         }, 60);
     }
 
-    function endPress() { 
-        clearInterval(pressTimer); 
-        holdBtn.classList.remove('active-press'); 
-        if(progress < 100) { progress = 0; bar.style.width = "0%"; isSent = false; } 
-    }
+    function endPress() { clearInterval(pressTimer); holdBtn.classList.remove('active-press'); if(progress < 100) { progress = 0; bar.style.width = "0%"; } }
 
     holdBtn.addEventListener('mousedown', startPress);
     holdBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startPress(); });
@@ -119,6 +108,8 @@
     function executeSubmit(id) {
         fetch(GAS_URL, { method: "POST", mode: 'no-cors', body: JSON.stringify({ teacher: data.t, id: id, name: data.name, purpose: data.p }) });
         localStorage.setItem('lc_'+id, new Date().getTime());
+        document.getElementById('holdingOverlay').style.display = 'flex';
+        setTimeout(() => { document.getElementById('holdingOverlay').style.display = 'none'; go(3); }, 1500);
     }
 </script>
 </body>
